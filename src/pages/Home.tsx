@@ -57,11 +57,7 @@ const Home: React.FC = () => {
 
   // Handle analytics view toggle
   const handleAnalyticsClick = () => {
-    if (!searchParams.competitor) {
-      alert('Please enter a competitor name to view analytics.');
-      return;
-    }
-    setViewAnalytics(true);
+    alert("Analytics is under construction!")
   };
 
   return (
