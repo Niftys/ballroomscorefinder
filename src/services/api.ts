@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_BACKEND_URL
+const BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const fetchCompetitors = async (query: string): Promise<string[]> => {
   const response = await fetch(`${BASE_URL}/fetchCompetitors?${encodeURIComponent(query)}`);

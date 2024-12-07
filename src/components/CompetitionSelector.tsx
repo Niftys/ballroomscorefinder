@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
 interface Competition {
+  id: number;
   name: string;
 }
 
@@ -15,12 +18,15 @@ const CompetitionSelector: React.FC<CompetitionSelectorProps> = ({ onSelectionCh
   useEffect(() => {
     const fetchCompetitions = async () => {
       try {
-        const response = await fetch('http://18.217.200.160/fetchCompetitions.php');
+        const response = await fetch(`${BASE_URL}/fetchCompetitions`);
         if (!response.ok) {
           throw new Error('Failed to fetch competitions');
         }
-        const data = await response.json();
-        setCompetitions(data);
+
+        // Parse the body as JSON after extracting it from the response
+        const result = await response.json();
+        const competitionsData = JSON.parse(result.body); // Parse the 'body' string into JSON
+        setCompetitions(competitionsData);  // Set the parsed competitions data
       } catch (error) {
         console.error('Error fetching competitions:', error);
       }

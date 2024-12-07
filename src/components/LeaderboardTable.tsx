@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
 interface CompetitorData {
   competitor: string;
   place_count: number;
@@ -7,21 +9,26 @@ interface CompetitorData {
 
 const LeaderboardTable: React.FC = () => {
   const [data, setData] = useState<CompetitorData[]>([]);
-  const [placement, setPlacement] = useState<string>('1'); // Default to 1st place
+  const [placement, setPlacement] = useState<string>('1');
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch leaderboard data whenever the placement value changes
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       try {
         const response = await fetch(
-          `http://18.217.200.160/fetchTotalPlacements.php?placement=${placement}`
+          `${BASE_URL}/fetchTotalPlacements?placement=${placement}`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
-        const result = await response.json();
-        setData(result);
+
+        const result = await response.json();  // Parse as JSON
+        console.log("Raw API Response:", result);  // Log the raw response for debugging
+
+        // Ensure the body is properly parsed if it's in string format (unescaped)
+        const data = JSON.parse(result.body);  // Access the 'body' and parse it
+
+        setData(data);  // Set the array of competitors
         setError(null);
       } catch (err) {
         console.error('Error fetching top competitors:', err);
@@ -31,7 +38,7 @@ const LeaderboardTable: React.FC = () => {
     };
 
     fetchLeaderboardData();
-  }, [placement]); // Dependency on placement to refetch data when it changes
+  }, [placement]);
 
   return (
     <div className="max-w-4xl mx-auto bg-gray-800 bg-opacity-50 rounded-lg shadow-lg overflow-hidden p-6">

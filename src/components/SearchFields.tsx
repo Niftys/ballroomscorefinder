@@ -1,5 +1,7 @@
-import React, { useState, ChangeEvent, useEffect, KeyboardEvent } from 'react';
+import React, { useState, ChangeEvent, KeyboardEvent, useEffect } from 'react';
 import AutocompleteField from './AutocompleteField';
+
+const BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 interface SearchFieldsProps {
   searchParams: Record<string, string>; // Current search params
@@ -41,7 +43,7 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
       {/* Competitor Input */}
       <AutocompleteField
         placeholder="Enter Competitor"
-        fetchUrl="http://18.217.200.160/fetchCompetitors.php"
+        fetchUrl={`${BASE_URL}/fetchCompetitors`}
         onSelect={(value) => handleInputChange('competitor', value)}
         value={fields.competitor || ''}
         allowFreeInput
@@ -51,7 +53,7 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
       {/* Style Input */}
       <AutocompleteField
         placeholder="Enter Style"
-        fetchUrl="http://18.217.200.160/fetchStyles.php"
+        fetchUrl={`${BASE_URL}/fetchStyles`}
         onSelect={(value) => handleInputChange('style', value)}
         value={fields.style || ''}
         allowFreeInput

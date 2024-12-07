@@ -5,6 +5,8 @@ import ResultsTable from '../components/ResultsTable';
 import Analytics from '../components/Analytics';
 import { useNavigate } from 'react-router-dom';
 
+const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [results, setResults] = useState<any[]>([]);
@@ -16,8 +18,8 @@ const Home: React.FC = () => {
     style: '',
     score: '',
   });
-  const [viewAnalytics, setViewAnalytics] = useState<boolean>(false); // Toggle for analytics view
-  const [error, setError] = useState<string | null>(null); // Store error messages
+  const [viewAnalytics, setViewAnalytics] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCompetitionChange = (selected: string[]) => {
     setSelectedCompetitions(selected);
@@ -29,35 +31,46 @@ const Home: React.FC = () => {
       alert('Please select at least one competition.');
       return;
     }
-
+  
     setLoading(true);
     try {
-      // Construct the query string for the API
       const queryString = new URLSearchParams({
-        ...searchParams, // Use the latest searchParams state
+        ...searchParams,
         competition: selectedCompetitions.join(','),
       }).toString();
-
-      console.log(`Fetching data with query: http://18.217.200.160/fetchData.php?${queryString}`);
-
-      const response = await fetch(`http://18.217.200.160/fetchData.php?${queryString}`);
+  
+      console.log(`Fetching data with query: ${BASE_URL}/fetchData?${queryString}`);
+  
+      const response = await fetch(`${BASE_URL}/fetchData?${queryString}`);
       if (!response.ok) {
         throw new Error('Failed to fetch competition results');
       }
+  
       const data = await response.json();
-      setResults(data);
-      setViewAnalytics(false);
+      console.log("API Response:", data);  // Log the data for debugging
+  
+      // Check if the data has a 'body' string and parse it
+      if (data.body) {
+        const parsedData = JSON.parse(data.body);  // Parse the 'body' string into JSON
+        setResults(parsedData);  // Set the parsed data
+      } else {
+        // Handle cases where there is no 'body' or unexpected data format
+        console.error("Unexpected data format:", data);
+        setError("Unexpected data format.");
+        setResults([]);
+      }
     } catch (error) {
       console.error('Error fetching competition results:', error);
+      setError('An error occurred while fetching the data.');
       setResults([]);
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   // Handle analytics view toggle
   const handleAnalyticsClick = () => {
-    alert("Analytics is under construction!")
+    alert("Analytics is under construction!");
   };
 
   return (
@@ -78,11 +91,10 @@ const Home: React.FC = () => {
             searchParams={searchParams}
             setSearchParams={setSearchParams}
             selectedCompetitions={selectedCompetitions}
-            onSearch={handleSearch} // Directly call handleSearch when search is triggered
+            onSearch={handleSearch} 
           />
-
           <button
-            onClick={handleSearch} // Ensure handleSearch is called with the latest searchParams
+            onClick={handleSearch}
             className="bg-gold-600 text-white px-6 py-3 rounded-lg hover:bg-gold-500 transition duration-200 shadow-md"
           >
             Search
