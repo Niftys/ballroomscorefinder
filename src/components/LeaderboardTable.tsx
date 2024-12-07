@@ -51,7 +51,7 @@ const LeaderboardTable: React.FC = () => {
       <h1 className="text-4xl font-bold text-center mb-8">Leaderboard</h1>
 
       {/* Placement Buttons */}
-      <div className="overflow-x-auto flex justify-center mb-6 space-x-2">
+      <div className="overflow-x-auto flex justify-start mb-6 space-x-2 px-4 sm:px-0">
         {Array.from({ length: 8 }, (_, i) => i + 1).map((place) => (
           <button
             key={place}
