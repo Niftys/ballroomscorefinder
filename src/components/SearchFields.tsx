@@ -29,7 +29,7 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
   };
 
   const handleSearchClick = () => {
-    onSearch(); // Simply trigger the parent search callback
+    onSearch(); // Trigger the parent search callback
   };
 
   const handleKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -42,13 +42,14 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
       {/* Competitor Input */}
       <div className="w-full">
-        <AutocompleteField
+      <AutocompleteField
           placeholder="Enter Competitor"
-          fetchUrl={`${BASE_URL}/fetchCompetitors`}
-          onSelect={(value) => handleInputChange('competitor', value)}
-          value={fields.competitor || ''}
-          allowFreeInput
-          onKeyPress={handleKeyPress} // Search on Enter
+          yort="competitor"
+          fetchUrl={`${BASE_URL}/fetchCompetitors`}  // Correctly points to the backend URL for fetching competitors
+          onSelect={(value) => handleInputChange('competitor', value)}  // When a suggestion is selected, it updates the 'competitor' field
+          value={fields.competitor || ''}  // Ensures the field is controlled
+          allowFreeInput={true}  // Allows free input
+          onKeyPress={handleKeyPress}  // Triggers search on Enter key press
         />
       </div>
 
@@ -56,8 +57,9 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
       <div className="w-full">
         <AutocompleteField
           placeholder="Enter Style"
+          yort="style"
           fetchUrl={`${BASE_URL}/fetchStyles`}
-          onSelect={(value) => handleInputChange('style', value)}
+          onSelect={(value) => handleInputChange('style', value)} // Update 'style' field
           value={fields.style || ''}
           allowFreeInput
           onKeyPress={handleKeyPress} // Search on Enter
@@ -71,7 +73,7 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
           placeholder="Enter Score"
           value={fields.score || ''}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            handleInputChange('score', e.target.value)
+            handleInputChange('score', e.target.value) // Update 'score' field
           }
           onKeyPress={handleKeyPress} // Search on Enter
           className="p-3 bg-gray-800 border border-gray-500 hover:border-gold-500 hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 rounded-lg w-full"

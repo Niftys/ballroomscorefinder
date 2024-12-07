@@ -56,7 +56,7 @@ const LeaderboardTable: React.FC = () => {
           <button
             key={place}
             onClick={() => setPlacement(String(place))}
-            className={`px-4 py-2 rounded-lg font-semibold transition duration-200 shadow-md ${
+            className={`overflow-x-auto px-4 py-2 rounded-lg font-semibold transition duration-200 shadow-md ${
               placement === String(place)
                 ? 'bg-purple-700 text-white'
                 : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
