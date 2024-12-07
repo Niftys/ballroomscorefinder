@@ -41,36 +41,42 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
       {/* Competitor Input */}
-      <AutocompleteField
-        placeholder="Enter Competitor"
-        fetchUrl={`${BASE_URL}/fetchCompetitors`}
-        onSelect={(value) => handleInputChange('competitor', value)}
-        value={fields.competitor || ''}
-        allowFreeInput
-        onKeyPress={handleKeyPress} // Search on Enter
-      />
+      <div className="w-full">
+        <AutocompleteField
+          placeholder="Enter Competitor"
+          fetchUrl={`${BASE_URL}/fetchCompetitors`}
+          onSelect={(value) => handleInputChange('competitor', value)}
+          value={fields.competitor || ''}
+          allowFreeInput
+          onKeyPress={handleKeyPress} // Search on Enter
+        />
+      </div>
 
       {/* Style Input */}
-      <AutocompleteField
-        placeholder="Enter Style"
-        fetchUrl={`${BASE_URL}/fetchStyles`}
-        onSelect={(value) => handleInputChange('style', value)}
-        value={fields.style || ''}
-        allowFreeInput
-        onKeyPress={handleKeyPress} // Search on Enter
-      />
+      <div className="w-full">
+        <AutocompleteField
+          placeholder="Enter Style"
+          fetchUrl={`${BASE_URL}/fetchStyles`}
+          onSelect={(value) => handleInputChange('style', value)}
+          value={fields.style || ''}
+          allowFreeInput
+          onKeyPress={handleKeyPress} // Search on Enter
+        />
+      </div>
 
       {/* Score Input */}
-      <input
-        type="text"
-        placeholder="Enter Score"
-        value={fields.score || ''}
-        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-          handleInputChange('score', e.target.value)
-        }
-        onKeyPress={handleKeyPress} // Search on Enter
-        className="p-3 bg-gray-800 border border-gray-500 hover:border-gold-500 rounded-lg w-full"
-      />
+      <div className="w-full">
+        <input
+          type="text"
+          placeholder="Enter Score"
+          value={fields.score || ''}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            handleInputChange('score', e.target.value)
+          }
+          onKeyPress={handleKeyPress} // Search on Enter
+          className="p-3 bg-gray-800 border border-gray-500 hover:border-gold-500 hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 rounded-lg w-full"
+        />
+      </div>
     </div>
   );
 };

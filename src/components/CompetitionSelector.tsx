@@ -48,13 +48,13 @@ const CompetitionSelector: React.FC<CompetitionSelectorProps> = ({ onSelectionCh
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-4 w-full sm:w-1/3 max-w-4xl mx-auto">
       <select
         id="competitionSelect"
         multiple
         value={selectedCompetitions}
         onChange={handleChange}
-        className="w-full p-3 bg-gray-800 border border-gray-500 rounded-lg hover:ring-gold-500"
+        className="text-center w-full p-3 bg-gray-800 border border-gray-500 rounded-lg hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 focus-transition:200"
       >
         {competitions.map((competition, index) => (
           <option key={index} value={competition.name}>
@@ -65,7 +65,7 @@ const CompetitionSelector: React.FC<CompetitionSelectorProps> = ({ onSelectionCh
       <button
         type="button"
         onClick={handleSelectAll}
-        className="bg-gray-500 hover:bg-gray-600 transition duration-200 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gold-300 shadow-md"
+        className="bg-gray-500 hover:bg-gray-600 transition duration-200 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gold-300 shadow-md w-full"
       >
         Select All (not recommended)
       </button>

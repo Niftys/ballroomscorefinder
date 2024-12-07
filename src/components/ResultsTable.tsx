@@ -49,41 +49,43 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
   };
 
   return (
-    <div className="max-h-[calc(100vh-550px)] mt-6 overflow-y-auto w-full shadow-lg text-center">
-      <table className="table-auto w-full border-collapse border border-opacity-0 shadow-lg bg-gray-700 bg-opacity-70">
-        <thead>
-          <tr className="bg-gray-800 text-gray-200">
-            {headers.map((header) => (
-              <th
-                key={header.key as string} 
-                className="px-4 py-2 border border-gray-500 border-opacity-50 cursor-pointer"
-                onClick={() => handleHeaderClick(header.key as keyof CompetitorData)}
-              >
-                {header.label}{' '}
-                {sortColumn === header.key && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedResults.length > 0 ? (
-            sortedResults.map((competitor, index) => (
-              <tr key={index}>
-                <td className="px-4 py-2">{competitor.placement}</td>
-                <td className="px-4 py-2">{competitor.person_name}</td>
-                <td className="px-4 py-2">{competitor.style_name}</td>
-                <td className="px-4 py-2">{competitor.comp_name}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={headers.length} className="px-4 py-2 text-center text-gray-400">
-                No results found.
-              </td>
+    <div className="max-h-100vh sm:max-h-[calc(100vh-550px)] mt-6 overflow-y-auto w-full shadow-lg text-center">
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full min-w-max border-collapse border border-opacity-0 shadow-lg bg-gray-700 bg-opacity-70">
+          <thead>
+            <tr className="bg-gray-800 text-gray-200">
+              {headers.map((header) => (
+                <th
+                  key={header.key as string} 
+                  className="px-4 py-2 border border-gray-500 border-opacity-50 cursor-pointer text-sm sm:text-base"
+                  onClick={() => handleHeaderClick(header.key as keyof CompetitorData)}
+                >
+                  {header.label}{' '}
+                  {sortColumn === header.key && (sortDirection === 'asc' ? '▲' : '▼')}
+                </th>
+              ))}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sortedResults.length > 0 ? (
+              sortedResults.map((competitor, index) => (
+                <tr key={index} className="hover:bg-gray-600">
+                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.placement}</td>
+                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.person_name}</td>
+                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.style_name}</td>
+                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.comp_name}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={headers.length} className="px-4 py-2 text-center text-gray-400">
+                  No results found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

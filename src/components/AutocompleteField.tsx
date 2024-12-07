@@ -49,7 +49,7 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
         value={value}
         onChange={handleInputChange}
         onKeyPress={onKeyPress} // Add key press event
-        className="p-3 bg-gray-800 border border-gray-500 hover:border-gold-500 rounded-lg w-full"
+        className="p-3 bg-gray-800 border border-gray-500 hover:border-gold-500 hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 rounded-lg w-full"
         onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
       />

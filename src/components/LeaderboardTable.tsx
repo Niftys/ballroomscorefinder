@@ -71,8 +71,8 @@ const LeaderboardTable: React.FC = () => {
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {/* Results Table */}
-      <div className="max-h-[calc(100vh-300px)] overflow-y-auto border border-gray-700 rounded-lg">
-        <table className="table-auto w-full">
+      <div className="max-h-[calc(100vh-300px)] overflow-y-auto overflow-x-auto border border-gray-700 rounded-lg">
+        <table className="table-auto w-full text-sm sm:text-base">
           <thead className="bg-gray-700">
             <tr>
               <th className="px-4 py-2 text-left">Competitor</th>

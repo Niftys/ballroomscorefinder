@@ -86,7 +86,7 @@ const Home: React.FC = () => {
           Placements Leaderboard
         </button>
         <CompetitionSelector onSelectionChange={handleCompetitionChange} />
-        <div className="container mx-auto flex items-center space-x-5">
+        <div className="container mx-auto items-center space-x-5 flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-4 sm:space-y-0">
           <SearchFields
             searchParams={searchParams}
             setSearchParams={setSearchParams}
@@ -95,21 +95,21 @@ const Home: React.FC = () => {
           />
           <button
             onClick={handleSearch}
-            className="bg-gold-600 text-white px-6 py-3 rounded-lg hover:bg-gold-500 transition duration-200 shadow-md"
+            className="bg-gold-600 text-white px-6 py-3 rounded-lg hover:bg-gold-500 transition duration-200 shadow-md w-full sm:w-auto"
           >
             Search
           </button>
 
           <button
             onClick={handleAnalyticsClick}
-            className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition duration-200 shadow-md"
+            className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition duration-200 shadow-md w-full sm:w-auto"
           >
             Analytics
           </button>
           {viewAnalytics && (
             <button
               onClick={() => setViewAnalytics(false)}
-              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-500 transition duration-200 shadow-md"
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-500 transition duration-200 shadow-md w-full sm:w-auto"
             >
               Back to Results
             </button>
