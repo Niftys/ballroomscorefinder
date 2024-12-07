@@ -51,12 +51,12 @@ const LeaderboardTable: React.FC = () => {
       <h1 className="text-4xl font-bold text-center mb-8">Leaderboard</h1>
 
       {/* Placement Buttons */}
-      <div className="overflow-x-auto flex justify-start mb-6 space-x-2 px-4 sm:px-0">
+      <div className="overflow-x-auto sm:overflow-hidden flex justify-start mb-6 space-x-2 px-4 sm:px-0">
         {Array.from({ length: 8 }, (_, i) => i + 1).map((place) => (
           <button
             key={place}
             onClick={() => setPlacement(String(place))}
-            className={`overflow-x-auto px-4 py-2 rounded-lg font-semibold transition duration-200 shadow-md ${
+            className={`min-w-[90px] sm:min-w-screen sm:px-4 px-2 py-2 rounded-lg font-semibold transition duration-200 shadow-md text-center ${
               placement === String(place)
                 ? 'bg-purple-700 text-white'
                 : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
