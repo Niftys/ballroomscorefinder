@@ -4,6 +4,6 @@
 
 /* Add any global custom styles here */
 body {
-  @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50;
+  @apply bg-gray-900 text-gray-50;
   transition: background-color 0.3s, color 0.3s;
 }

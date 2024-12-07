@@ -4,6 +4,7 @@ import SearchFields from '../components/SearchFields';
 import ResultsTable from '../components/ResultsTable';
 import Analytics from '../components/Analytics';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -75,46 +76,68 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-400 text-gray-100">
-      <div className="container mx-auto p-8 flex flex-col items-center space-y-8">
+      <motion.div className="container mx-auto p-8 flex flex-col items-center space-y-5"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        >
         <h1 className="text-5xl font-extrabold text-white text-center drop-shadow-md">
           Ballroom Score Finder
         </h1>
-        <button
+        <motion.button
           onClick={() => navigate('/leaderboard')}
-          className="text-white bg-purple-900 hover:bg-purple-800 px-6 py-3 rounded-lg shadow-lg transition duration-200 font-bold"
+          className="text-white bg-purple-900 hover:bg-purple-800 px-6 py-3 rounded-lg shadow-lg font-bold"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ ease: 'easeOut', duration: 0.1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { delay: 0.1} }}
         >
           Placements Leaderboard
-        </button>
+        </motion.button>
         <CompetitionSelector onSelectionChange={handleCompetitionChange} />
-        <div className="container mx-auto items-center space-x-5 flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-4 sm:space-y-0">
+        <motion.div 
+        className="container mx-auto items-center space-x-5 flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-4 sm:space-y-0"
+        initial={{ opacity: 0, y: 20}}
+        animate={{ opacity: 1, y: 0, transition: { delay: 0.2} }}
+        >
           <SearchFields
             searchParams={searchParams}
             setSearchParams={setSearchParams}
             selectedCompetitions={selectedCompetitions}
             onSearch={handleSearch} 
           />
-          <button
+          <motion.button
             onClick={handleSearch}
             className="bg-gold-600 text-white px-6 py-3 rounded-lg hover:bg-gold-500 transition duration-200 shadow-md w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9, transition: { duration: 0.001 } }}
+            transition={{ ease: 'easeOut', duration: 0.05 }}
           >
             Search
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             onClick={handleAnalyticsClick}
             className="bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition duration-200 shadow-md w-full sm:w-auto"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9, transition: { duration: 0.001 } }}
+            transition={{ ease: 'easeOut', duration: 0.05 }}
           >
             Analytics
-          </button>
+          </motion.button>
           {viewAnalytics && (
-            <button
+            <motion.button
               onClick={() => setViewAnalytics(false)}
               className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-500 transition duration-200 shadow-md w-full sm:w-auto"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9, transition: { duration: 0.001 } }}
+              transition={{ ease: 'easeOut', duration: 0.05 }}
             >
               Back to Results
-            </button>
+            </motion.button>
           )}
-        </div>
+        </motion.div>
 
         {viewAnalytics ? (
           <Analytics
@@ -132,7 +155,7 @@ const Home: React.FC = () => {
           <ResultsTable results={results} />
         )}
         {error && <p className="text-red-500">{error}</p>}
-      </div>
+      </motion.div>
     </div>
   );
 };

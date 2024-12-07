@@ -54,7 +54,7 @@ const CompetitionSelector: React.FC<CompetitionSelectorProps> = ({ onSelectionCh
         multiple
         value={selectedCompetitions}
         onChange={handleChange}
-        className="text-center w-full p-3 bg-gray-800 border border-gray-500 rounded-lg hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 focus-transition:200"
+        className="text-center w-full p-3 bg-gray-800 border border-gray-500 rounded-lg hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 scrollbar-thin scrollbar-thumb-purple-800 scrollbar-track-gray-700"
       >
         {competitions.map((competition, index) => (
           <option key={index} value={competition.name}>
