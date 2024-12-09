@@ -97,7 +97,7 @@ const Home: React.FC = () => {
         </motion.button>
         <CompetitionSelector onSelectionChange={handleCompetitionChange} />
         <motion.div 
-        className="container mx-auto items-center space-x-5 flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-4 sm:space-y-0"
+        className="container mx-auto items-center flex flex-col sm:flex-row sm:items-center sm:space-x-5 space-y-4 sm:space-y-0"
         initial={{ opacity: 0, y: 20}}
         animate={{ opacity: 1, y: 0, transition: { delay: 0.2} }}
         >
