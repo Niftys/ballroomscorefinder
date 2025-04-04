@@ -41,35 +41,34 @@ const LeaderboardTable: React.FC = () => {
 
   return (
     <motion.div 
-      className="max-w-4xl mx-auto bg-gray-800 bg-opacity-50 rounded-lg shadow-lg overflow-hidden p-6"
-      initial={{ opacity: 0, y: 30 }} 
+      className="max-w-4xl mx-auto bg-gray-900/80 backdrop-blur-sm rounded-lg shadow-2xl border border-purple-600/30 overflow-hidden p-6"
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Back to Home Button */}
-      <motion.button
-        onClick={() => (window.location.href = '/')}
-        className="bg-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition duration-200 shadow-md"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ ease: 'easeOut', duration: 0.5 }}
-      >
-        Back to Home
-      </motion.button>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <motion.h1
+          className="text-3xl font-bold text-gold-300"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          Placements Leaderboard
+        </motion.h1>
+        <motion.button
+          onClick={() => (window.location.href = '/')}
+          className="bg-gradient-to-r from-purple-700/80 to-purple-800/90 hover:from-purple-800 hover:to-purple-900 px-5 py-2.5 rounded-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Back to Search
+        </motion.button>
+      </div>
 
-      {/* Title Animation */}
-      <motion.h1
-        className="text-4xl font-bold text-center mb-4"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        Leaderboard
-      </motion.h1>
-
-      {/* Placement Buttons Animation */}
+      {/* Placement Buttons */}
       <motion.div
-        className="overflow-x-auto sm:overflow-hidden flex justify-start mb-4 space-x-2 px-4 py-2 sm:px-0"
+        className="flex flex-wrap gap-2 mb-6"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -78,67 +77,46 @@ const LeaderboardTable: React.FC = () => {
           <motion.button
             key={place}
             onClick={() => setPlacement(String(place))}
-            className={`min-w-[90px] sm:min-w-screen sm:px-4 px-2 py-2 rounded-lg font-semibold shadow-md text-center 
-              ${placement === String(place)
-                ? 'bg-purple-700 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-[#5a3e95]'
-              }`}
-            whileHover={{ y: -5 }}
-            whileTap={{ scale: 0.95 }} // Slight scale down on click
-            transition={{ ease: 'easeOut', duration: 0.1 }}
+            className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all duration-200 ${
+              placement === String(place)
+                ? 'bg-gradient-to-r from-gold-600 to-gold-700 text-purple-900'
+                : 'bg-gray-800/50 text-gold-100 hover:bg-gray-700/50'
+            }`}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.95 }}
           >
             {place}{place === 1 ? 'st' : place === 2 ? 'nd' : place === 3 ? 'rd' : 'th'} Place
           </motion.button>
         ))}
       </motion.div>
 
-      {/* Error Handling Animation */}
-      {error && (
-        <motion.p
-          className="text-red-500 text-center"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          {error}
-        </motion.p>
-      )}
-
-      {/* Results Table Animation */}
+      {/* Table */}
       <motion.div
-        className="max-h-[calc(100vh-300px)] overflow-y-auto overflow-x-auto border border-gray-700 rounded-lg scrollbar-thin scrollbar-thumb-purple-800 scrollbar-track-gray-700"
+        className="border border-purple-600/30 rounded-lg overflow-hidden max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-800/50 scrollbar-track-gray-900/30"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.3 }}
       >
-        <table className="table-auto w-full text-sm sm:text-base">
-          <thead className="bg-gray-700">
+        <table className="w-full bg-gray-900/70">
+          <thead className="bg-purple-900/20 sticky top-0">
             <tr>
-              <th className="px-4 py-2 text-left">Competitor</th>
-              <th className="px-4 py-2 text-left">Placement Count</th>
+              <th className="px-4 py-3 text-left text-gold-300 font-semibold">Competitor</th>
+              <th className="px-4 py-3 text-left text-gold-300 font-semibold">Placements</th>
             </tr>
           </thead>
           <tbody>
-            {data.length > 0 ? (
-              data.map((competitor, index) => (
-                <motion.tr
-                  key={index}
-                  className="hover:bg-gray-600"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }} // Staggered animation for each row
-                >
-                  <td className="px-4 py-2">{competitor.competitor}</td>
-                  <td className="px-4 py-2">{competitor.place_count}</td>
-                </motion.tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2} className="px-4 py-2 text-center text-gray-400">
-                  No data available for {placement}{placement === '1' ? 'st' : placement === '2' ? 'nd' : placement === '3' ? 'rd' : 'th'} place
-                </td>
-              </tr>
-            )}
+            {data.map((competitor, index) => (
+              <motion.tr
+                key={index}
+                className="hover:bg-purple-900/10 border-t border-purple-600/20"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <td className="px-4 py-3 text-gold-100">{competitor.competitor}</td>
+                <td className="px-4 py-3 text-gold-100">{competitor.place_count}</td>
+              </motion.tr>
+            ))}
           </tbody>
         </table>
       </motion.div>

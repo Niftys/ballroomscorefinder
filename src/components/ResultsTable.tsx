@@ -78,55 +78,49 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
 
   return (
     <motion.div
-      className="mt-6 w-full shadow-lg text-center"
+      className="w-full shadow-lg"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.5 }}
     >
-      <div
-        className="overflow-x-auto max-h-96 overflow-y-auto scrollbar scrollbar-thumb-purple-800 scrollbar-track-gray-700"
-        onScroll={handleScroll}
-      >
-        <table className="table-auto w-full min-w-max border-collapse border border-opacity-0 shadow-lg bg-gray-700 bg-opacity-70">
-          <thead>
-            <tr className="bg-gray-800 text-gray-200">
+      <div className="overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-800/50 scrollbar-track-gray-900/30 border border-purple-600/30 rounded-lg">
+        <table className="w-full bg-gray-900/70">
+          <thead className="bg-purple-900/20 sticky top-0">
+            <tr>
               {['Placement', 'Competitor', 'Style', 'Competition'].map((label, index) => (
                 <motion.th
                   key={index}
-                  className="px-4 py-2 border border-gray-500 border-opacity-50 cursor-pointer text-sm sm:text-base"
+                  className="px-4 py-3 text-left text-gold-300 font-semibold cursor-pointer hover:bg-purple-900/10 transition-colors"
                   onClick={() => handleHeaderClick(label)}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ ease: 'easeOut', duration: 0.2 }}
+                  whileHover={{ scale: 1.02 }}
                 >
-                  {label}
-                  {sortColumn === columnMapping[label] && (sortDirection === 'asc' ? '▲' : '▼')}
+                  <div className="flex items-center gap-2">
+                    {label}
+                    {sortColumn === columnMapping[label] && (
+                      <span className="text-sm">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
                 </motion.th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {sortedResults.length > 0 ? (
-              sortedResults.map((competitor, index) => (
-                <motion.tr
-                  key={index}
-                  className="hover:bg-gray-600"
-                  initial={{ opacity: 0, y: 10 }} // Initial hidden state
-                  animate={{ opacity: 1, y: 0 }}   // Fade and slide up animation
-                  transition={{ delay: index * 0.05, duration: 0.3 }} // Stagger animation for rows
-                >
-                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.placement}</td>
-                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.person_name}</td>
-                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.style_name}</td>
-                  <td className="px-4 py-2 text-sm sm:text-base">{competitor.comp_name}</td>
-                </motion.tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-4 py-2 text-center text-gray-400">
-                  No results found.
-                </td>
-              </tr>
-            )}
+            {sortedResults.map((competitor, index) => (
+              <motion.tr
+                key={index}
+                className="hover:bg-purple-900/10 border-t border-purple-600/20"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <td className="px-4 py-3 text-gold-100">{competitor.placement}</td>
+                <td className="px-4 py-3 text-gold-100">{competitor.person_name}</td>
+                <td className="px-4 py-3 text-gold-100">{competitor.style_name}</td>
+                <td className="px-4 py-3 text-gold-100">{competitor.comp_name}</td>
+              </motion.tr>
+            ))}
           </tbody>
         </table>
       </div>

@@ -1,11 +1,19 @@
 const BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const fetchCompetitors = async (query: string): Promise<string[]> => {
-  const response = await fetch(`${BASE_URL}/fetchCompetitors?${encodeURIComponent(query)}`);
+  const sanitizedQuery = encodeURIComponent(query.trim());
+  if (!sanitizedQuery) return [];
+
+  const response = await fetch(`${BASE_URL}/fetchCompetitors?competitor=${encodeURIComponent(query)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch competitors');
   }
-  return response.json();
+
+  const result = await response.json();
+  const data = typeof result.body === 'string' ? JSON.parse(result.body) : result;
+
+  if (!Array.isArray(data)) return [];
+  return data.map((d: any) => d.name);
 };
 
 export const fetchCompetitions = async (): Promise<{ id: number; name: string }[]> => {
@@ -58,11 +66,20 @@ export const fetchJudges = async (query: string): Promise<string[]> => {
 };
 
 export const fetchStyles = async (query: string): Promise<string[]> => {
-  const response = await fetch(`${BASE_URL}/fetchStyles?${encodeURIComponent(query)}`);
+  const sanitizedQuery = encodeURIComponent(query.trim());
+  if (!sanitizedQuery) return [];
+
+  const response = await fetch(`${BASE_URL}/fetchStyles?style=${sanitizedQuery}`);
   if (!response.ok) {
     throw new Error('Failed to fetch styles');
   }
-  return response.json();
+
+  const result = await response.json();
+  // Handle both direct arrays and Lambda proxy responses
+  const data = typeof result.body === 'string' ? JSON.parse(result.body) : result;
+
+  if (!Array.isArray(data)) return [];
+  return data.map((d: any) => d.name);
 };
 
 export const fetchTotalPlacements = async (): Promise<any[]> => {
@@ -73,21 +90,38 @@ export const fetchTotalPlacements = async (): Promise<any[]> => {
   return response.json();
 };
 
-export const getAnalytics = async (competitorId: number): Promise<any[]> => {
-  const response = await fetch(`${BASE_URL}/fetchAnalytics?competitor_id=${competitorId}`);
-  
+export const getAnalytics = async (competitor: string): Promise<any[]> => {
+  const response = await fetch(
+    `${BASE_URL}/fetchAnalytics?competitor=${encodeURIComponent(competitor.trim())}`
+  );
+
   if (!response.ok) {
     throw new Error('Failed to fetch analytics');
   }
 
   const result = await response.json();
 
-  // Ensure the response is always an array
-  if (Array.isArray(result)) {
-    return result;
-  } else if (result.error || result.message) {
-    throw new Error(result.error || result.message || 'Unexpected API response format');
+  // 🔧 FIX: Parse result.body as JSON if it's a string
+  const data = typeof result.body === "string"
+    ? JSON.parse(result.body)
+    : result.body;
+
+  if (Array.isArray(data)) {
+    return data;
+  } else if (data.error || data.message) {
+    throw new Error(data.error || data.message || 'Unexpected API response format');
   } else {
-    return []; // Fallback to an empty array if the response is not an array
+    return [];
   }
+};
+
+export const fetchAveragePlacements = async (competitor: string): Promise<any[]> => {
+  const url = new URL(`${BASE_URL}/fetchAveragePlacements`);
+  url.searchParams.append('competitor', competitor);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) throw new Error('Failed to fetch average placements');
+
+  const result = await response.json();
+  return typeof result.body === 'string' ? JSON.parse(result.body) : result;
 };

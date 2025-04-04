@@ -1,9 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700&display=swap');
 
 /* Add any global custom styles here */
 body {
   @apply bg-gray-900 text-gray-50;
   transition: background-color 0.3s, color 0.3s;
+  font-family: 'Lato', sans-serif;
 }

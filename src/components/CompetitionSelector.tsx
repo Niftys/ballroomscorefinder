@@ -48,26 +48,45 @@ const CompetitionSelector: React.FC<CompetitionSelectorProps> = ({ onSelectionCh
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4 w-full sm:w-1/3 max-w-4xl mx-auto">
+    <div className="flex flex-col items-center space-y-4 w-full z-[1001]">
       <select
         id="competitionSelect"
         multiple
         value={selectedCompetitions}
         onChange={handleChange}
-        className="text-center w-full p-3 bg-gray-800 border border-gray-500 rounded-lg hover:ring-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500 scrollbar-thin scrollbar-thumb-purple-800 scrollbar-track-gray-700"
+        aria-label="Select competitions"
+        className=" z-[1001] w-full p-3 bg-gray-900/80 border border-purple-600/30 rounded-lg text-gold-100 focus:outline-none focus:ring-2 focus:ring-gold-500 scrollbar-thin scrollbar-thumb-purple-800/50 scrollbar-track-gray-900 hover:border-gold-500 transition-colors"
       >
         {competitions.map((competition, index) => (
-          <option key={index} value={competition.name}>
+          <option
+            key={index}
+            value={competition.name}
+            className={`z-[1001] px-4 py-2 transition-colors ${
+              selectedCompetitions.includes(competition.name)
+                ? 'bg-purple-900/20 text-gold-400' // Selected style
+                : 'bg-gray-900 text-gold-100 hover:bg-purple-900/20' // Default style
+            }`}
+          >
             {competition.name}
           </option>
         ))}
       </select>
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          #competitionSelect option:checked {
+            background-color: rgba(91, 33, 182, 0.2) !important;
+            color: #facc15 !important;
+          }
+        `
+      }} />
+
       <button
         type="button"
         onClick={handleSelectAll}
-        className="bg-gray-500 hover:bg-gray-600 transition duration-200 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gold-300 shadow-md w-full"
+        className="w-full bg-gradient-to-r from-purple-700/80 to-purple-800/90 hover:from-purple-800 hover:to-purple-900 px-6 py-3 rounded-lg font-semibold text-gold-100 shadow-lg transition-all"
       >
-        Select All (not recommended)
+        Select All Competitions
       </button>
     </div>
   );
