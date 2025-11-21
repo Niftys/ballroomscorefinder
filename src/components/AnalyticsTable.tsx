@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type JudgeRow = {
   judgeName: string;
@@ -16,11 +17,13 @@ type AnalyticsRow = JudgeRow | StyleRow;
 
 interface AnalyticsTableProps {
   data: AnalyticsRow[];
+  itemsPerPage?: number;
 }
 
-const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
+const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data, itemsPerPage = 25 }) => {
   const [sortColumn, setSortColumn] = useState<string>('judgeName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isJudgeData = (row: AnalyticsRow): row is JudgeRow => row && 'judgeName' in row;
 
@@ -29,6 +32,7 @@ const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
     if (data.length > 0) {
       setSortColumn(isJudgeData(data[0]) ? 'judgeName' : 'styleName');
     }
+    setCurrentPage(1); // Reset to first page when data changes
   }, [data]);
 
   const sortedAnalytics = useMemo(() => {
@@ -50,6 +54,46 @@ const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
     return sorted;
   }, [data, sortColumn, sortDirection]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedAnalytics.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAnalytics = sortedAnalytics.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-400">No analytics data available.</p>;
   }
@@ -61,6 +105,7 @@ const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
       setSortColumn(column);
       setSortDirection('asc');
     }
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   return (
@@ -70,6 +115,18 @@ const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.5 }}
     >
+      {/* Results info */}
+      <div className="mb-4 flex justify-between items-center text-sm text-purple-300/80">
+        <span>
+          Showing {startIndex + 1}-{Math.min(endIndex, sortedAnalytics.length)} of {sortedAnalytics.length} results
+        </span>
+        {totalPages > 1 && (
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+        )}
+      </div>
+
       <div className="overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-800/50 scrollbar-track-gray-900/30 border border-purple-600/30 rounded-lg">
         <table className="w-full bg-gray-900/70">
           <thead className="bg-purple-900/20 sticky top-0">
@@ -129,7 +186,7 @@ const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-            {sortedAnalytics.map((row: any, index: number) => (
+            {paginatedAnalytics.map((row: any, index: number) => (
               <motion.tr
                 key={index}
                 className="hover:bg-purple-900/10 border-t border-purple-600/20"
@@ -154,6 +211,51 @@ const AnalyticsTable: React.FC<AnalyticsTableProps> = ({ data }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-4">
+          <motion.button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="flex items-center gap-1 px-3 py-2 bg-purple-800/50 hover:bg-purple-700/70 disabled:bg-gray-700/50 disabled:cursor-not-allowed rounded-lg text-gold-100 transition-colors"
+            whileHover={{ scale: currentPage > 1 ? 1.05 : 1 }}
+            whileTap={{ scale: currentPage > 1 ? 0.95 : 1 }}
+          >
+            <ChevronLeft size={16} />
+            Previous
+          </motion.button>
+
+          <div className="flex gap-1">
+            {getPageNumbers().map((page) => (
+              <motion.button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  currentPage === page
+                    ? 'bg-gold-600 text-purple-900 font-semibold'
+                    : 'bg-purple-800/50 hover:bg-purple-700/70 text-gold-100'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {page}
+              </motion.button>
+            ))}
+          </div>
+
+          <motion.button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-1 px-3 py-2 bg-purple-800/50 hover:bg-purple-700/70 disabled:bg-gray-700/50 disabled:cursor-not-allowed rounded-lg text-gold-100 transition-colors"
+            whileHover={{ scale: currentPage < totalPages ? 1.05 : 1 }}
+            whileTap={{ scale: currentPage < totalPages ? 0.95 : 1 }}
+          >
+            Next
+            <ChevronRight size={16} />
+          </motion.button>
+        </div>
+      )}
     </motion.div>
   );
 };

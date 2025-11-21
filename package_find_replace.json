@@ -1,0 +1,23 @@
+{
+  "name": "firebase-find-replace",
+  "version": "1.0.0",
+  "description": "Firebase database find and replace utility",
+  "main": "firebase_find_replace.js",
+  "scripts": {
+    "start": "node firebase_find_replace.js",
+    "help": "node firebase_find_replace.js --help"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  },
+  "keywords": [
+    "firebase",
+    "firestore",
+    "find",
+    "replace",
+    "database",
+    "migration"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

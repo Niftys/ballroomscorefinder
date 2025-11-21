@@ -1,7 +1,10 @@
 import React, { ChangeEvent, KeyboardEvent, useCallback } from 'react';
 import AutocompleteField from './AutocompleteField';
 
-const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+// Firebase Functions URL - will be automatically set by Firebase Hosting
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' 
+  : 'http://localhost:5001/ballroom-score-finder/us-central1';
 
 const inputClassName = "p-3 bg-gray-900/80 border border-purple-600/30 rounded-lg text-gold-100 placeholder-purple-400/60 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-all w-full";
 
@@ -31,9 +34,9 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
   };  
 
   return (
-    <div className="flex w-full gap-4">
+    <div className="flex w-full gap-4 flex-wrap md:flex-nowrap">
       {/* Competitor Input */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 relative">
         <AutocompleteField
           placeholder="Enter Name"
           fetchUrl={`${BASE_URL}/fetchCompetitors`}
@@ -42,11 +45,13 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
           value={searchParams.competitor || ''}
           allowFreeInput={true}
           onKeyPress={handleKeyPress}
+          minCharacters={2}
+          debounceMs={400}
         />
       </div>
 
       {/* Style Input */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 relative">
         <AutocompleteField
           placeholder="Enter Style"
           fetchUrl={`${BASE_URL}/fetchStyles`}
@@ -55,6 +60,8 @@ const SearchFields: React.FC<SearchFieldsProps> = ({
           value={searchParams.style || ''}
           allowFreeInput={true}
           onKeyPress={handleKeyPress}
+          minCharacters={2}
+          debounceMs={400}
         />
       </div>
 

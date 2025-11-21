@@ -1,4 +1,7 @@
-const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+// Firebase Functions URL - will be automatically set by Firebase Hosting
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' 
+  : 'http://localhost:5001/ballroom-score-finder/us-central1';
 
 export const fetchCompetitors = async (query: string): Promise<string[]> => {
   const sanitizedQuery = encodeURIComponent(query.trim());
@@ -47,15 +50,6 @@ export const fetchData = async (filters: {
   return response.json();
 };
 
-export const fetchJudgeRatings = async (competitorId: number, styleId: number, competitionId: number): Promise<any[]> => {
-  const response = await fetch(
-    `${BASE_URL}/fetchJudgeRatings?competitor_id=${competitorId}&style_id=${styleId}&competition_id=${competitionId}`
-  );
-  if (!response.ok) {
-    throw new Error('Failed to fetch judge ratings');
-  }
-  return response.json();
-};
 
 export const fetchJudges = async (query: string): Promise<string[]> => {
   const response = await fetch(`${BASE_URL}/fetchJudges?${encodeURIComponent(query)}`);
@@ -75,11 +69,9 @@ export const fetchStyles = async (query: string): Promise<string[]> => {
   }
 
   const result = await response.json();
-  // Handle both direct arrays and Lambda proxy responses
-  const data = typeof result.body === 'string' ? JSON.parse(result.body) : result;
-
-  if (!Array.isArray(data)) return [];
-  return data.map((d: any) => d.name);
+  // Firebase Functions return data directly
+  if (!Array.isArray(result)) return [];
+  return result.map((d: any) => d.name);
 };
 
 export const fetchTotalPlacements = async (): Promise<any[]> => {
@@ -101,27 +93,41 @@ export const getAnalytics = async (competitor: string): Promise<any[]> => {
 
   const result = await response.json();
 
-  // 🔧 FIX: Parse result.body as JSON if it's a string
-  const data = typeof result.body === "string"
-    ? JSON.parse(result.body)
-    : result.body;
-
-  if (Array.isArray(data)) {
-    return data;
-  } else if (data.error || data.message) {
-    throw new Error(data.error || data.message || 'Unexpected API response format');
+  // Firebase Functions return data directly
+  if (Array.isArray(result)) {
+    return result;
+  } else if (result.error || result.message) {
+    throw new Error(result.error || result.message || 'Unexpected API response format');
   } else {
     return [];
   }
 };
 
 export const fetchAveragePlacements = async (competitor: string): Promise<any[]> => {
-  const url = new URL(`${BASE_URL}/fetchAveragePlacements`);
-  url.searchParams.append('competitor', competitor);
-
-  const response = await fetch(url.toString());
+  const response = await fetch(
+    `${BASE_URL}/fetchAveragePlacements?competitor=${encodeURIComponent(competitor.trim())}`
+  );
   if (!response.ok) throw new Error('Failed to fetch average placements');
 
   const result = await response.json();
-  return typeof result.body === 'string' ? JSON.parse(result.body) : result;
+  return result;
+};
+
+export const fetchCompetitionHistory = async (competitor: string): Promise<any[]> => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/fetchCompetitionHistory?competitor=${encodeURIComponent(competitor.trim())}`
+    );
+    
+    if (!response.ok) {
+      console.warn('Competition history endpoint not available, returning empty array');
+      return [];
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error fetching competition history:', error);
+    return [];
+  }
 };

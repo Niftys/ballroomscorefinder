@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getAnalytics, fetchAveragePlacements } from '../services/api';
+import { getAnalytics, fetchAveragePlacements, fetchCompetitionHistory } from '../services/api';
 import AnalyticsTable from './AnalyticsTable';
+import CompetitionHistoryTable from './CompetitionHistoryTable';
 
 interface AnalyticsProps {
   competitor: string; // instead of name
@@ -19,11 +20,18 @@ interface StyleRow {
   averagePlacement: number;
 }
 
+interface CompetitionHistoryRow {
+  competition_name: string;
+  placements: { placement: number; count: number }[];
+  total_entries: number;
+}
+
 const Analytics: React.FC<AnalyticsProps> = ({ competitor, onDataLoad, onError }) => {
   const [loading, setLoading] = useState(false);
   const [judgeData, setJudgeData] = useState<JudgeRow[]>([]);
   const [styleData, setStyleData] = useState<StyleRow[]>([]);
-  const [activeTab, setActiveTab] = useState<'judges' | 'styles'>('judges');
+  const [competitionHistoryData, setCompetitionHistoryData] = useState<CompetitionHistoryRow[]>([]);
+  const [activeTab, setActiveTab] = useState<'judges' | 'styles' | 'competitions'>('judges');
 
   useEffect(() => {
     if (!competitor || typeof competitor !== 'string') return;
@@ -32,27 +40,45 @@ const Analytics: React.FC<AnalyticsProps> = ({ competitor, onDataLoad, onError }
       setLoading(true);
       console.log("Running analytics for:", competitor);
       try {
-        const analytics = await getAnalytics(competitor);
-        const placements = await fetchAveragePlacements(competitor);
+        const [analytics, placements, competitionHistory] = await Promise.all([
+          getAnalytics(competitor),
+          fetchAveragePlacements(competitor),
+          fetchCompetitionHistory(competitor).catch(() => []) // Fallback to empty array if endpoint not deployed
+        ]);
   
-        const judgeResults = analytics.map((row) => ({
-          judgeName: row.judgeName,
-          averageScore: parseFloat(row.averageScore),
-          styleCount: parseInt(row.styleCount, 10),
-        }));
+        console.log('Analytics data received:', analytics);
+        console.log('Placements data received:', placements);
+        console.log('Competition history data received:', competitionHistory);
+  
+        const judgeResults = analytics.map((row) => {
+          console.log('Processing judge row:', row);
+          return {
+            judgeName: row.judgeName || 'Unknown Judge',
+            averageScore: parseFloat(row.averageScore) || 0,
+            styleCount: parseInt(row.styleCount, 10) || 0,
+          };
+        });
   
         const styleResults = placements.map((row) => ({
           styleName: row.style_name,
           averagePlacement: parseFloat(row.average_placement),
         }));
+
+        const competitionHistoryResults = competitionHistory.map((row) => ({
+          competition_name: row.competition_name,
+          placements: row.placements,
+          total_entries: row.total_entries
+        }));
   
         setJudgeData(judgeResults);
         setStyleData(styleResults);
+        setCompetitionHistoryData(competitionHistoryResults);
         onDataLoad(judgeResults);
       } catch (err) {
         onError((err as Error).message);
         setJudgeData([]);
         setStyleData([]);
+        setCompetitionHistoryData([]);
       } finally {
         setLoading(false);
       }
@@ -83,11 +109,20 @@ const Analytics: React.FC<AnalyticsProps> = ({ competitor, onDataLoad, onError }
         >
           Style Analysis
         </button>
+        <button
+          className={`px-4 py-2 rounded-md font-bold ${
+            activeTab === 'competitions' ? 'bg-purple-700 text-white' : 'bg-gray-700 text-gray-300'
+          }`}
+          onClick={() => setActiveTab('competitions')}
+        >
+          Competition History
+        </button>
       </div>
 
       {/* Content */}
       {activeTab === 'judges' && <AnalyticsTable data={judgeData} />}
       {activeTab === 'styles' && <AnalyticsTable data={styleData} />}
+      {activeTab === 'competitions' && <CompetitionHistoryTable data={competitionHistoryData} />}
     </div>
   );
 };

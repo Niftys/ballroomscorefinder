@@ -1,13 +1,70 @@
 {
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
+  },
   "hosting": {
     "public": "build",
-    "rewrites": [
-      { "source": "**", "destination": "/index.html" }
-    ],
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/fetchCompetitors",
+        "function": "fetchCompetitors"
+      },
+      {
+        "source": "/api/fetchCompetitions",
+        "function": "fetchCompetitions"
+      },
+      {
+        "source": "/api/fetchData",
+        "function": "fetchData"
+      },
+      {
+        "source": "/api/fetchJudges",
+        "function": "fetchJudges"
+      },
+      {
+        "source": "/api/fetchStyles",
+        "function": "fetchStyles"
+      },
+      {
+        "source": "/api/fetchTotalPlacements",
+        "function": "fetchTotalPlacements"
+      },
+      {
+        "source": "/api/fetchAnalytics",
+        "function": "fetchAnalytics"
+      },
+      {
+        "source": "/api/fetchAveragePlacements",
+        "function": "fetchAveragePlacements"
+      },
+      {
+        "source": "/api/fetchCompetitionHistory",
+        "function": "fetchCompetitionHistory"
+      },
+      {
+        "source": "/api/fetchUserCompetitionHistory",
+        "function": "fetchUserCompetitionHistory"
+      },
+      {
+        "source": "/api/fetchUserScores",
+        "function": "fetchUserScores"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ]
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }

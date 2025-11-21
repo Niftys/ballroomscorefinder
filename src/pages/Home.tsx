@@ -1,17 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import CompetitionSelector from '../components/CompetitionSelector';
 import SearchFields from '../components/SearchFields';
 import ResultsTable from '../components/ResultsTable';
 import AnalyticsTable from '../components/AnalyticsTable';
 import Analytics from '../components/Analytics';
+import AuthModal from '../components/AuthModal';
+import ProfileSetupModal from '../components/ProfileSetupModal';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, BarChart2, Award, Loader, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { Search, BarChart2, Award, Loader, ChevronLeft, ChevronRight, Menu, X, LogIn, User } from 'lucide-react';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { useAuth } from '../contexts/AuthContext';
 
-const BASE_URL = process.env.REACT_APP_BACKEND_URL;
+// Firebase Functions URL - will be automatically set by Firebase Hosting
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' 
+  : 'http://localhost:5001/ballroom-score-finder/us-central1';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const analytics = useAnalytics();
+  const { currentUser, userProfile, loading: authLoading } = useAuth();
   const [results, setResults] = useState<any[]>([]);
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -26,6 +35,39 @@ const Home: React.FC = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [showProfileSetup, setShowProfileSetup] = useState<boolean>(false);
+
+  // Check if user needs to complete profile setup
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      if (userProfile) {
+        // Show setup modal if user has no first name or last name
+        // This ensures all users must complete their profile, even if Google provided a name
+        const needsSetup = !userProfile.firstName || !userProfile.lastName;
+        setShowProfileSetup(needsSetup);
+      } else {
+        // User just signed up but profile hasn't loaded yet, wait a bit
+        // The profile should be created by AuthContext, so we'll check again when it loads
+        const timer = setTimeout(() => {
+          if (!userProfile) {
+            setShowProfileSetup(true);
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentUser, userProfile, authLoading]);
+  
+  // Search optimization refs
+  const searchTimeoutRef = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastSearchParamsRef = useRef<string>('');
+
+  // Track page view on mount
+  useEffect(() => {
+    analytics.trackPageView('home', 'Ballroom Score Finder - Home');
+  }, [analytics]);
 
   // Check if the device is mobile
   useEffect(() => {
@@ -44,40 +86,27 @@ const Home: React.FC = () => {
   // Competition selection handler
   const handleCompetitionChange = (selected: string[]) => {
     setSelectedCompetitions(selected);
+    // Track competition selection
+    analytics.trackCompetitionSelection(selected);
   };
 
-  // Search execution handler
-  const handleSearch = async () => {
-    if (selectedCompetitions.length === 0) {
-      alert('Please select at least one competition.');
-      return;
+  // Optimized search execution handler with debouncing and request cancellation
+  const executeSearch = useCallback(async (params: URLSearchParams) => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  
-    setLoading(true);
-    setError(null);
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
     try {
-      // Build query params
-      const params = new URLSearchParams();
+      setLoading(true);
+      setError(null);
       
-      // Add competitions
-      if (selectedCompetitions.length > 0) {
-        params.append('competition', selectedCompetitions.join(','));
-      }
-      
-      // Add other search params if they exist
-      if (searchParams.competitor?.trim()) {
-        params.append('competitor', searchParams.competitor.trim());
-      }
-      
-      if (searchParams.style?.trim()) {
-        params.append('style', searchParams.style.trim());
-      }
-      
-      if (searchParams.score?.trim()) {
-        params.append('score', searchParams.score.trim());
-      }
-  
-      const response = await fetch(`${BASE_URL}/fetchData?${params}`);
+      const response = await fetch(`${BASE_URL}/fetchData?${params}`, {
+        signal: abortControllerRef.current.signal
+      });
       
       if (!response.ok) {
         throw new Error(`Failed to fetch results: ${response.status}`);
@@ -104,25 +133,132 @@ const Home: React.FC = () => {
         setSidebarCollapsed(true);
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Request was cancelled, ignore
+        return;
+      }
       console.error('Search error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
       setResults([]);
+      
+      // Track error
+      analytics.trackError('search_error', err instanceof Error ? err.message : 'Unknown error', 'home_search');
     } finally {
       setLoading(false);
     }
-  };
+  }, [isMobile]);
+
+  const handleSearch = useCallback(() => {
+    if (selectedCompetitions.length === 0) {
+      alert('Please select at least one competition.');
+      return;
+    }
+
+    // Track search event
+    analytics.trackSearch('main_search', {
+      competitor: searchParams.competitor || '',
+      style: searchParams.style || '',
+      score: searchParams.score || '',
+      competition_count: selectedCompetitions.length
+    });
+
+    // Build query params
+    const params = new URLSearchParams();
+    
+    // Add competitions
+    if (selectedCompetitions.length > 0) {
+      params.append('competition', selectedCompetitions.join(','));
+    }
+    
+    // Add other search params if they exist
+    if (searchParams.competitor?.trim()) {
+      params.append('competitor', searchParams.competitor.trim());
+    }
+    
+    if (searchParams.style?.trim()) {
+      params.append('style', searchParams.style.trim());
+    }
+    
+    if (searchParams.score?.trim()) {
+      params.append('score', searchParams.score.trim());
+    }
+
+    const searchKey = params.toString();
+    
+    // Prevent duplicate searches
+    if (searchKey === lastSearchParamsRef.current) {
+      return;
+    }
+    
+    lastSearchParamsRef.current = searchKey;
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce search execution
+    searchTimeoutRef.current = window.setTimeout(() => {
+      executeSearch(params);
+    }, 200);
+  }, [selectedCompetitions, searchParams, executeSearch]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Analytics handler
-  const handleAnalyticsClick = () => {
+  const handleAnalyticsClick = async () => {
     const competitorInput = document.querySelector<HTMLInputElement>('input[placeholder="Enter Name"]')?.value.trim();
 
-    if (competitorInput) {
-      setSearchParams((prev) => ({ ...prev, competitor: competitorInput }));
-      setViewAnalytics(false);
-      setTimeout(() => setViewAnalytics(true), 0);
-    } else {
+    if (!competitorInput) {
       alert('Please select a competitor to view analytics.');
-    }    
+      return;
+    }
+
+    // Track analytics view
+    analytics.trackAnalyticsView(competitorInput);
+
+    // First validate that it looks like a complete couple name
+    const hasCoupleIndicator = competitorInput.includes('&') || 
+                              competitorInput.toLowerCase().includes(' and ') ||
+                              competitorInput.split(' ').length >= 2;
+
+    if (!hasCoupleIndicator) {
+      alert('Please enter the complete couple\'s name (e.g., "Seth Lowery & Natalie Chavez") to view analytics.');
+      return;
+    }
+
+    // Check if this exact couple name exists in the database
+    try {
+      const response = await fetch(`${BASE_URL}/fetchAnalytics?competitor=${encodeURIComponent(competitorInput)}`);
+      
+      if (response.status === 404) {
+        const errorData = await response.json();
+        alert(errorData.error || 'No exact match found. Please enter the exact couple\'s name as it appears in the database.');
+        return;
+      }
+      
+      if (!response.ok) {
+        alert('Error validating couple name. Please try again.');
+        return;
+      }
+    } catch (error) {
+      alert('Error validating couple name. Please try again.');
+      return;
+    }
+
+    setSearchParams((prev) => ({ ...prev, competitor: competitorInput }));
+    setViewAnalytics(false);
+    setTimeout(() => setViewAnalytics(true), 0);
   };  
 
   // Toggle sidebar
@@ -134,12 +270,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-gray-100 font-sans flex flex-col">
       {/* Header */}
       <header className="w-full bg-black/40 py-3 md:py-4 border-b border-purple-600/50 shadow-2xl">
-        <motion.div 
-          className="container mx-auto px-3 md:px-4 flex justify-between items-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="container mx-auto px-3 md:px-4 flex justify-between items-center">
           {/* Title Section */}
           <div className="text-center sm:text-left">
             <h1 className="text-2xl md:text-4xl font-serif font-bold mb-0 md:mb-1">
@@ -162,27 +293,46 @@ const Home: React.FC = () => {
             </p>
           </div>
 
-          {/* Leaderboard Link */}
-          <motion.button
-            onClick={() => navigate('/leaderboard')}
-            className="flex items-center gap-1 md:gap-2 bg-gradient-to-r from-purple-700/80 to-purple-800/90 hover:from-purple-800 hover:to-purple-900 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-lg text-sm md:text-base font-semibold"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Award className="text-gold-200" size={isMobile ? 16 : 18} />
-            <span className="text-gold-100">Leaderboard</span>
-          </motion.button>
-        </motion.div>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {currentUser ? (
+              <motion.button
+                onClick={() => navigate(`/profile/${currentUser.uid}`)}
+                className="flex items-center gap-1 md:gap-2 bg-purple-800 hover:bg-purple-900 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-lg text-sm md:text-base font-semibold"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <User className="text-gold-200" size={isMobile ? 16 : 18} />
+                <span className="text-gold-100 hidden sm:inline">Profile</span>
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={() => setAuthModalOpen(true)}
+                className="flex items-center gap-1 md:gap-2 bg-purple-800 hover:bg-purple-900 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-lg text-sm md:text-base font-semibold"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <LogIn className="text-gold-200" size={isMobile ? 16 : 18} />
+                <span className="text-gold-100 hidden sm:inline">Sign In</span>
+              </motion.button>
+            )}
+            <motion.button
+              onClick={() => navigate('/leaderboard')}
+              className="flex items-center gap-1 md:gap-2 bg-purple-800 hover:bg-purple-900 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-lg text-sm md:text-base font-semibold"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Award className="text-gold-200" size={isMobile ? 16 : 18} />
+              <span className="text-gold-100">Leaderboard</span>
+            </motion.button>
+          </div>
+        </div>
       </header>
 
       {/* Search Bar Section */}
       <div className="bg-gray-900/70 border-b border-purple-600/30 py-3 md:py-4">
         <div className="container mx-auto px-3 md:px-4">
-          <motion.div 
-            className="bg-gray-900/80 rounded-xl p-3 md:p-4 shadow-xl border border-purple-600/30"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div className="bg-gray-900/80 rounded-xl p-3 md:p-4 shadow-xl border border-purple-600/30">
             <div className="flex flex-col gap-3 md:gap-4">
               {/* Search Fields Row */}
               <div className="w-full px-0 md:px-4">
@@ -208,7 +358,7 @@ const Home: React.FC = () => {
 
                 <motion.button
                   onClick={handleAnalyticsClick}
-                  className="flex items-center justify-center gap-1 md:gap-2 bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm md:text-base font-medium shadow-lg flex-1 md:flex-initial"
+                  className="flex items-center justify-center gap-1 md:gap-2 bg-purple-800 hover:bg-purple-900 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm md:text-base font-medium shadow-lg flex-1 md:flex-initial"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -217,7 +367,7 @@ const Home: React.FC = () => {
                 </motion.button>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -240,13 +390,11 @@ const Home: React.FC = () => {
         </button>
 
         {/* Collapsible Sidebar */}
-        <motion.div 
+        <div 
           className={`bg-gray-900/80 border-r border-purple-600/30 flex flex-col transition-all duration-300 z-[100]
             ${sidebarCollapsed ? 
               'w-0 md:w-12 overflow-hidden' : 
               'fixed md:relative inset-y-0 left-0 w-4/5 md:w-64 overflow-auto'}`}
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
         >
           {/* Sidebar Toggle Button for Desktop */}
           <div className="hidden md:flex justify-end p-2">
@@ -275,15 +423,11 @@ const Home: React.FC = () => {
               )}
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Main Content Area */}
         <div className="flex-grow p-2 md:p-4 overflow-hidden">
-          <motion.div 
-            className="bg-gray-900/80 rounded-xl p-3 md:p-4 shadow-2xl border border-purple-600/30 h-full overflow-hidden flex flex-col"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div className="bg-gray-900/80 rounded-xl p-3 md:p-4 shadow-2xl border border-purple-600/30 h-full overflow-hidden flex flex-col">
             {/* Results Header */}
             <div className="flex justify-between items-center mb-3 md:mb-4 pb-2 border-b border-purple-600/20">
               <h2 className="text-lg md:text-xl font-semibold text-gold-300">
@@ -292,7 +436,7 @@ const Home: React.FC = () => {
               {viewAnalytics && (
                 <motion.button
                   onClick={() => setViewAnalytics(false)}
-                  className="bg-gradient-to-r from-red-700/80 to-red-800/90 hover:from-red-800 hover:to-red-900 px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-gold-100 shadow-md text-xs md:text-sm"
+                  className="bg-red-800 hover:bg-red-900 px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-gold-100 shadow-md text-xs md:text-sm"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -344,9 +488,20 @@ const Home: React.FC = () => {
                 </div>
               )}                
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      
+      {/* Profile Setup Modal */}
+      <ProfileSetupModal 
+        isOpen={showProfileSetup} 
+        onComplete={() => {
+          setShowProfileSetup(false);
+        }} 
+      />
     </div>
   );
 };

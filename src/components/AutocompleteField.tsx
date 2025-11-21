@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface AutocompleteFieldProps {
   placeholder: string;
@@ -8,7 +8,13 @@ interface AutocompleteFieldProps {
   allowFreeInput?: boolean;
   queryParam?: string;
   onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  minCharacters?: number;
+  debounceMs?: number;
 }
+
+// Cache for autocomplete suggestions
+const suggestionCache = new Map<string, { data: string[], timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   placeholder,
@@ -18,6 +24,8 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   allowFreeInput = false,
   queryParam,
   onKeyPress,
+  minCharacters = 2,
+  debounceMs = 300,
 }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState(value);
@@ -25,6 +33,7 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   const [isFetching, setIsFetching] = useState(false);
   const timeoutRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Sync external value
   useEffect(() => {
@@ -33,9 +42,77 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
     }
   }, [value]);
 
-  // Debounced fetch
+  // Optimized fetch with caching, debouncing, and request cancellation
+  const fetchSuggestions = useCallback(async (query: string) => {
+    const trimmedQuery = query.trim();
+    const cacheKey = `${fetchUrl}:${trimmedQuery}`;
+    
+    // Check cache first
+    const cached = suggestionCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setSuggestions(cached.data);
+      return;
+    }
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
+    try {
+      setIsFetching(true);
+      const queryKey = queryParam || 'q';
+      const response = await fetch(`${fetchUrl}?${queryKey}=${encodeURIComponent(trimmedQuery)}`, {
+        signal: abortControllerRef.current.signal
+      });
+      
+      if (!response.ok) {
+        console.error('Autocomplete fetch error:', response.status);
+        setSuggestions([]);
+        return;
+      }
+      
+      const result = await response.json();
+      let data;
+      
+      // Handle different response formats
+      if (result.body) {
+        data = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+      } else {
+        data = result;
+      }
+      
+      // Extract names if array of objects, otherwise use as is
+      let names: string[] = [];
+      if (Array.isArray(data)) {
+        names = data.map((item: any) => {
+          // Handle both object and string responses
+          if (typeof item === 'string') return item;
+          return item.name || item.style || item.value || item.label || '';
+        }).filter(Boolean);
+      }
+      
+      // Cache the results
+      suggestionCache.set(cacheKey, { data: names, timestamp: Date.now() });
+      setSuggestions(names);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Request was cancelled, ignore
+        return;
+      }
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setIsFetching(false);
+    }
+  }, [fetchUrl, queryParam]);
+
+  // Debounced fetch with minimum character threshold
   useEffect(() => {
-    if (!inputValue || inputValue.trim().length === 0) {
+    if (!inputValue || inputValue.trim().length < minCharacters) {
       setSuggestions([]);
       return;
     }
@@ -44,53 +121,25 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = window.setTimeout(async () => {
-      try {
-        setIsFetching(true);
-        const queryKey = queryParam || 'q'; // fallback
-        const response = await fetch(`${fetchUrl}?${queryKey}=${encodeURIComponent(inputValue.trim())}`);
-        
-        if (!response.ok) {
-          console.error('Autocomplete fetch error:', response.status);
-          setSuggestions([]);
-          return;
-        }
-        
-        const result = await response.json();
-        let data;
-        
-        // Handle different response formats
-        if (result.body) {
-          data = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
-        } else {
-          data = result;
-        }
-        
-        // Extract names if array of objects, otherwise use as is
-        let names: string[] = [];
-        if (Array.isArray(data)) {
-          names = data.map((item: any) => {
-            // Handle both object and string responses
-            if (typeof item === 'string') return item;
-            return item.name || item.style || item.value || item.label || '';
-          }).filter(Boolean);
-        }
-        
-        setSuggestions(names);
-      } catch (error) {
-        console.error('Error fetching suggestions:', error);
-        setSuggestions([]);
-      } finally {
-        setIsFetching(false);
-      }
-    }, 300); // Debounce delay
+    timeoutRef.current = window.setTimeout(() => {
+      fetchSuggestions(inputValue);
+    }, debounceMs);
     
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [inputValue, fetchUrl, queryParam]);
+  }, [inputValue, fetchSuggestions, minCharacters, debounceMs]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -118,7 +167,7 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   };
 
   return (
-    <div className="relative w-full z-[100] md:z-[1000]" ref={containerRef}>
+    <div className="relative w-full" ref={containerRef}>
       <input
         type="text"
         placeholder={placeholder}
@@ -163,7 +212,7 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
         className="p-3 bg-gray-900/80 border border-purple-600/30 rounded-lg text-gold-100 placeholder-purple-400/60 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-all w-full"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute z-[1000] w-full bg-gray-900 border border-gray-700 rounded-md mt-1 max-h-60 overflow-y-auto scrollbar-none">
+        <ul className="absolute z-[150] w-full bg-gray-900 border border-purple-600/30 rounded-md mt-1 max-h-60 overflow-y-auto shadow-xl">
           {suggestions.map((suggestion, index) => (
             <li
               key={index}

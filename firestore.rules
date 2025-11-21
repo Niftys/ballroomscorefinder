@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to all collections for public use
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false; // Read-only access by default
+    }
+    
+    // Users collection: allow authenticated users to create/update their own profile
+    match /users/{userId} {
+      // Anyone can read user profiles (for public profile pages)
+      allow read: if true;
+      
+      // Users can create their own profile document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their own profile document
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Users cannot delete their profile (optional - remove if you want to allow deletion)
+      allow delete: if false;
+    }
+  }
+}
